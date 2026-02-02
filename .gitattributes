@@ -1,0 +1,10 @@
+* text=auto
+*.blade.php diff=html
+*.css text
+*.js text
+*.json text
+*.md text
+*.php diff=php
+*.sql text
+*.xml text
+*.yml text
