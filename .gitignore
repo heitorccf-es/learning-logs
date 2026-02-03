@@ -1,4 +1,4 @@
-# Back-end
+# Back-end (Laravel)
 laravel/.env
 laravel/.env.backup
 laravel/.env.phpunit
@@ -21,8 +21,13 @@ laravel/storage/framework/views/*
 laravel/storage/logs/*
 !laravel/storage/logs/.gitignore
 laravel/vendor/
+laravel/database/*.sqlite
+laravel/database/*.sqlite-journal
+laravel/_ide_helper.php
+laravel/_ide_helper_models.php
+laravel/.phpstorm.meta.php
 
-# Front-end
+# Front-end (Next.js)
 next/*.tsbuildinfo
 next/.env
 next/.env*.local
@@ -33,7 +38,7 @@ next/coverage/
 next/next-env.d.ts
 next/out/
 
-# Misc
+# Misc / Global
 *.bak
 *.log
 *.old
