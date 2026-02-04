@@ -1,3 +1,8 @@
+# Root / Base
+/vendor
+/.env
+/.phpunit.result.cache
+
 # Back-end (Laravel)
 laravel/.env
 laravel/.env.backup
@@ -27,7 +32,7 @@ laravel/_ide_helper.php
 laravel/_ide_helper_models.php
 laravel/.phpstorm.meta.php
 
-# Front-end (Next.js)
+# Front-end (Next)
 next/*.tsbuildinfo
 next/.env
 next/.env*.local
@@ -38,7 +43,14 @@ next/coverage/
 next/next-env.d.ts
 next/out/
 
-# Misc / Global
+# Node / Logs
+**/node_modules/
+npm-debug.log*
+pnpm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Misc / System
 *.bak
 *.log
 *.old
@@ -46,12 +58,7 @@ next/out/
 *.swp
 *.tmp
 *~
-**/node_modules/
 .DS_Store
 .idea/
 .vscode/
 Thumbs.db
-npm-debug.log*
-pnpm-debug.log*
-yarn-debug.log*
-yarn-error.log*

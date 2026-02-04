@@ -6,7 +6,7 @@ use App\Services\RecipeService;
 use App\Http\Resources\RecipeResource;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Pagination\LengthAwarePaginator;
+use Barryvdh\DomPDF\Facade\Pdf;
 
 class RecipeController extends Controller
 {
@@ -22,22 +22,18 @@ class RecipeController extends Controller
         $validated = $request->validate([
             'ingredients' => 'required|array',
             'ingredients.*' => 'string|max:50',
-            'page' => 'integer|min:1' // Aceitamos o parâmetro de página
+            'page' => 'integer|min:1'
         ]);
 
-        // 1. Busca TODAS as receitas que dão match (Cacheado no Service)
         $allRecipes = $this->recipeService->findByIngredients($validated['ingredients']);
 
-        // 2. Configuração da Paginação
         $page = $request->input('page', 1);
-        $perPage = 6; // Quantas receitas por página (6 fica bonito no grid 2x3 ou 3x2)
+        $perPage = 6;
         $offset = ($page - 1) * $perPage;
 
-        // 3. Fatiar o array (Pega apenas as receitas da página atual)
         $items = array_slice($allRecipes, $offset, $perPage);
         $total = count($allRecipes);
 
-        // 4. Retornar estrutura com metadados
         return response()->json([
             'data' => RecipeResource::collection($items),
             'meta' => [
@@ -47,5 +43,53 @@ class RecipeController extends Controller
                 'per_page' => $perPage
             ]
         ]);
+    }
+
+    public function exportPdf(Request $request, string $id)
+    {
+        $validated = $request->validate([
+            'user_ingredients' => 'array',
+        ]);
+
+        $recipe = $this->recipeService->findById($id);
+
+        if (!$recipe) {
+            return response()->json(['error' => 'Recipe not found'], 404);
+        }
+
+        $userIngredients = array_map('strtolower', $validated['user_ingredients'] ?? []);
+        $processedIngredients = [];
+
+        $rawIngredients = $recipe['raw_ingredients'] ?? [];
+
+        foreach ($rawIngredients as $ingName) {
+            $ingLower = strtolower($ingName);
+            $has = false;
+
+            foreach ($userIngredients as $userIng) {
+                if (str_contains($ingLower, $userIng)) {
+                    $has = true;
+                    break;
+                }
+            }
+
+            $processedIngredients[] = [
+                'name' => $ingName,
+                'has_ingredient' => $has
+            ];
+        }
+
+        $recipe['ingredients'] = $processedIngredients;
+
+        // Gera o PDF
+        $pdf = Pdf::loadView('pdf.recipe', ['recipe' => $recipe]);
+
+        // Limpeza de buffer
+        if (ob_get_length()) {
+            ob_end_clean();
+        }
+
+        // Download direto
+        return $pdf->download("receita-{$id}.pdf");
     }
 }

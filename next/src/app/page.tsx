@@ -51,6 +51,53 @@ export default function Home() {
         setIngredients(ingredients.filter((_, i) => i !== index));
     };
 
+    // --- FUNÇÃO DE DOWNLOAD DO PDF (MOVIDA PARA CÁ) ---
+    const downloadPdf = async (recipeId: string, recipeTitle: string) => {
+        try {
+            // O usuário precisa saber que o download começou
+            const btnId = `btn-pdf-${recipeId}`;
+            const btn = document.getElementById(btnId) as HTMLButtonElement;
+            if (btn) {
+                const originalText = btn.innerHTML; // Salva o ícone
+                btn.innerText = "Baixando...";
+                btn.disabled = true;
+            }
+
+            const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/recipes/${recipeId}/pdf`, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({ user_ingredients: ingredients }),
+            });
+
+            if (!response.ok) throw new Error("Erro ao gerar PDF");
+
+            // Truque do Blob para baixar arquivos via AJAX
+            const blob = await response.blob();
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement("a");
+            a.href = url;
+            a.download = `${recipeTitle.replace(/\s+/g, "_")}.pdf`; // Nome do arquivo
+            document.body.appendChild(a);
+            a.click();
+            window.URL.revokeObjectURL(url);
+            document.body.removeChild(a);
+        } catch (error) {
+            console.error(error);
+            alert("Não foi possível gerar o PDF.");
+        } finally {
+            // Restaura o botão
+            const btnId = `btn-pdf-${recipeId}`;
+            const btn = document.getElementById(btnId) as HTMLButtonElement;
+            if (btn) {
+                // Recria o HTML do botão (Texto + Ícone)
+                btn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-3 h-3"><path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3" /></svg> PDF`;
+                btn.disabled = false;
+            }
+        }
+    };
+
     // Função de busca (memoizada para usar no useEffect)
     const fetchPage = useCallback(async (page: number, currentIngredients: string[]) => {
         if (currentIngredients.length === 0) {
@@ -85,7 +132,7 @@ export default function Home() {
                 setRecipes([]);
                 setHasSearched(false);
             }
-        }, 500); // Pequeno delay (debounce) para não buscar enquanto digita muito rápido
+        }, 500);
 
         return () => clearTimeout(timeoutId);
     }, [ingredients, fetchPage]);
@@ -252,6 +299,31 @@ export default function Home() {
                                                     );
                                                 })}
                                             </ul>
+
+                                            {/* --- BOTÃO DE PDF (INSERIDO AQUI) --- */}
+                                            <div className="mt-4 pt-4 border-t border-gray-100 flex justify-end">
+                                                <button
+                                                    id={`btn-pdf-${recipe.id}`}
+                                                    onClick={() => downloadPdf(recipe.id, recipe.title)}
+                                                    className="text-xs font-bold text-gray-500 hover:text-red-600 flex items-center gap-1 transition-colors px-3 py-1 rounded border border-gray-200 hover:border-red-200 bg-gray-50"
+                                                >
+                                                    <svg
+                                                        xmlns="http://www.w3.org/2000/svg"
+                                                        fill="none"
+                                                        viewBox="0 0 24 24"
+                                                        strokeWidth={2}
+                                                        stroke="currentColor"
+                                                        className="w-3 h-3"
+                                                    >
+                                                        <path
+                                                            strokeLinecap="round"
+                                                            strokeLinejoin="round"
+                                                            d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3"
+                                                        />
+                                                    </svg>
+                                                    PDF
+                                                </button>
+                                            </div>
                                         </div>
                                     </div>
                                 ))}
@@ -311,6 +383,8 @@ export default function Home() {
                                 );
                             })}
                         </div>
+
+                        {/* BOTÃO DE PDF DAQUI FOI REMOVIDO POIS ESTAVA QUEBRADO */}
 
                         <div className="mt-8 pt-6 border-t border-gray-100">
                             <div className="bg-blue-50 p-4 rounded-xl">
