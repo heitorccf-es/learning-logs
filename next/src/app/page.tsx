@@ -24,17 +24,14 @@ export default function Home() {
     const [ingredientInput, setIngredientInput] = useState("");
     const [ingredients, setIngredients] = useState<string[]>([]);
 
-    // Estados de Dados e Paginação
     const [recipes, setRecipes] = useState<Recipe[]>([]);
     const [meta, setMeta] = useState<PaginationMeta | null>(null);
 
     const [loading, setLoading] = useState(false);
     const [hasSearched, setHasSearched] = useState(false);
 
-    // Adiciona ingrediente
     const addIngredient = (value: string) => {
         const trimmed = value.trim();
-        // Evita duplicados (case insensitive)
         const exists = ingredients.some((ing) => ing.toLowerCase() === trimmed.toLowerCase());
 
         if (trimmed && !exists) {
@@ -51,14 +48,11 @@ export default function Home() {
         setIngredients(ingredients.filter((_, i) => i !== index));
     };
 
-    // --- FUNÇÃO DE DOWNLOAD DO PDF (MOVIDA PARA CÁ) ---
     const downloadPdf = async (recipeId: string, recipeTitle: string) => {
         try {
-            // O usuário precisa saber que o download começou
             const btnId = `btn-pdf-${recipeId}`;
             const btn = document.getElementById(btnId) as HTMLButtonElement;
             if (btn) {
-                const originalText = btn.innerHTML; // Salva o ícone
                 btn.innerText = "Baixando...";
                 btn.disabled = true;
             }
@@ -73,12 +67,11 @@ export default function Home() {
 
             if (!response.ok) throw new Error("Erro ao gerar PDF");
 
-            // Truque do Blob para baixar arquivos via AJAX
             const blob = await response.blob();
             const url = window.URL.createObjectURL(blob);
             const a = document.createElement("a");
             a.href = url;
-            a.download = `${recipeTitle.replace(/\s+/g, "_")}.pdf`; // Nome do arquivo
+            a.download = `${recipeTitle.replace(/\s+/g, "_")}.pdf`;
             document.body.appendChild(a);
             a.click();
             window.URL.revokeObjectURL(url);
@@ -87,18 +80,15 @@ export default function Home() {
             console.error(error);
             alert("Não foi possível gerar o PDF.");
         } finally {
-            // Restaura o botão
             const btnId = `btn-pdf-${recipeId}`;
             const btn = document.getElementById(btnId) as HTMLButtonElement;
             if (btn) {
-                // Recria o HTML do botão (Texto + Ícone)
                 btn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-3 h-3"><path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3" /></svg> PDF`;
                 btn.disabled = false;
             }
         }
     };
 
-    // Função de busca (memoizada para usar no useEffect)
     const fetchPage = useCallback(async (page: number, currentIngredients: string[]) => {
         if (currentIngredients.length === 0) {
             setRecipes([]);
@@ -137,7 +127,6 @@ export default function Home() {
         return () => clearTimeout(timeoutId);
     }, [ingredients, fetchPage]);
 
-    // Função auxiliar para verificar match visual
     const isIngredientAvailable = (recipeLine: string) => {
         return ingredients.some((userIng) => recipeLine.toLowerCase().includes(userIng.toLowerCase()));
     };
@@ -149,24 +138,31 @@ export default function Home() {
                 <div className="lg:col-span-2 space-y-8">
                     {/* Área de Busca */}
                     <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
-                        {/* Aviso sobre Inglês */}
-                        <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4 mb-6 rounded-r-lg">
-                            <div className="flex">
-                                <div className="flex-shrink-0">
-                                    <svg className="h-5 w-5 text-yellow-400" viewBox="0 0 20 20" fill="currentColor">
-                                        <path
-                                            fillRule="evenodd"
-                                            d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z"
-                                            clipRule="evenodd"
-                                        />
-                                    </svg>
-                                </div>
-                                <div className="ml-3">
-                                    <p className="text-sm text-yellow-700">
-                                        <span className="font-bold">Atenção:</span> Para ingredientes manuais, digite em{" "}
-                                        <strong>Inglês</strong> (ex: Beef, Carrot). O banco de dados é internacional.
-                                    </p>
-                                </div>
+                        {/* AVISO SOBRE O INGLÊS */}
+                        <div className="bg-amber-50 border border-amber-100 rounded-lg p-4 mb-6 flex items-start gap-3">
+                            <svg
+                                xmlns="http://www.w3.org/2000/svg"
+                                fill="none"
+                                viewBox="0 0 24 24"
+                                strokeWidth={1.5}
+                                stroke="currentColor"
+                                className="w-5 h-5 text-amber-600 mt-0.5 flex-shrink-0"
+                            >
+                                <path
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z"
+                                />
+                            </svg>
+                            <div>
+                                <h4 className="text-sm font-bold text-amber-800">Base de dados internacional</h4>
+                                <p className="text-sm text-amber-700 mt-1">
+                                    Por favor, digite os ingredientes em <strong>inglês</strong> (ex: <em>Chicken</em>{" "}
+                                    em vez de Frango). <br />
+                                    <span className="text-xs opacity-75">
+                                        Os botões ao lado já fazem a conversão automaticamente!!
+                                    </span>
+                                </p>
                             </div>
                         </div>
 
@@ -176,7 +172,7 @@ export default function Home() {
                                 value={ingredientInput}
                                 onChange={(e) => setIngredientInput(e.target.value)}
                                 onKeyDown={(e) => e.key === "Enter" && handleManualAdd()}
-                                placeholder="O que você tem aí? (Digite em Inglês...)"
+                                placeholder="Digite um ingrediente (em inglês)..."
                                 className="flex-1 p-4 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500 transition-all"
                             />
 
@@ -228,7 +224,6 @@ export default function Home() {
                             ))}
                         </div>
 
-                        {/* Loading Bar se estiver carregando automaticamente */}
                         {loading && (
                             <div className="w-full bg-gray-200 h-1 mt-6 rounded-full overflow-hidden">
                                 <div className="bg-green-500 h-1 rounded-full animate-progress"></div>
@@ -236,7 +231,7 @@ export default function Home() {
                         )}
                     </div>
 
-                    {/* Resultados e Paginação */}
+                    {/* Resultados */}
                     {hasSearched && recipes.length === 0 && !loading ? (
                         <div className="text-center py-12 bg-white rounded-xl border border-dashed border-gray-300">
                             <p className="text-gray-500 text-lg">Nenhuma receita encontrada.</p>
@@ -246,7 +241,6 @@ export default function Home() {
                         </div>
                     ) : (
                         <>
-                            {/* GRID DE RECEITAS */}
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                 {recipes.map((recipe) => (
                                     <div
@@ -272,10 +266,7 @@ export default function Home() {
                                                 <span className="text-xs font-bold text-gray-400 uppercase">
                                                     Ingredientes
                                                 </span>
-                                                <span
-                                                    className="text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full"
-                                                    title="Ingredientes que você tem"
-                                                >
+                                                <span className="text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full">
                                                     Compatíveis:{" "}
                                                     {recipe.ingredients.filter((i) => isIngredientAvailable(i)).length}
                                                 </span>
@@ -300,7 +291,6 @@ export default function Home() {
                                                 })}
                                             </ul>
 
-                                            {/* --- BOTÃO DE PDF (INSERIDO AQUI) --- */}
                                             <div className="mt-4 pt-4 border-t border-gray-100 flex justify-end">
                                                 <button
                                                     id={`btn-pdf-${recipe.id}`}
@@ -329,7 +319,6 @@ export default function Home() {
                                 ))}
                             </div>
 
-                            {/* CONTROLES DE PAGINAÇÃO */}
                             {meta && meta.last_page > 1 && (
                                 <div className="flex items-center justify-center gap-4 mt-8 bg-white p-4 rounded-xl shadow-sm border border-gray-100">
                                     <button
@@ -361,8 +350,23 @@ export default function Home() {
                 {/* COLUNA DIREITA - SUGESTÕES */}
                 <div className="lg:col-span-1">
                     <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 sticky top-8">
+                        {/* ALTERADO AQUI: ÍCONE E TÍTULO */}
                         <h2 className="text-lg font-bold text-gray-800 mb-4 flex items-center gap-2">
-                            <span className="text-xl">⚡</span> Adição Rápida
+                            <svg
+                                xmlns="http://www.w3.org/2000/svg"
+                                fill="none"
+                                viewBox="0 0 24 24"
+                                strokeWidth={1.5}
+                                stroke="currentColor"
+                                className="w-6 h-6 text-emerald-600"
+                            >
+                                <path
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    d="M15.75 10.5V6a3.75 3.75 0 10-7.5 0v4.5m11.356-1.993l1.263 12c.07.665-.45 1.243-1.119 1.243H4.25a1.125 1.125 0 01-1.12-1.243l1.264-12A1.125 1.125 0 015.513 7.5h12.974c.576 0 1.059.435 1.119 1.007zM8.625 10.5a.375.375 0 11-.75 0 .375.375 0 01.75 0zm7.5 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z"
+                                />
+                            </svg>
+                            Ingredientes
                         </h2>
                         <div className="flex flex-wrap gap-2">
                             {COMMON_INGREDIENTS.map((item) => {
@@ -382,18 +386,6 @@ export default function Home() {
                                     </button>
                                 );
                             })}
-                        </div>
-
-                        {/* BOTÃO DE PDF DAQUI FOI REMOVIDO POIS ESTAVA QUEBRADO */}
-
-                        <div className="mt-8 pt-6 border-t border-gray-100">
-                            <div className="bg-blue-50 p-4 rounded-xl">
-                                <h3 className="font-bold text-blue-800 text-sm mb-1">💡 Dica!</h3>
-                                <p className="text-xs text-blue-600 leading-relaxed">
-                                    A busca automática funciona melhor com 2 a 4 ingredientes principais. Tente combinar
-                                    uma proteína (ex: Frango) com uma base (ex: Arroz).
-                                </p>
-                            </div>
                         </div>
                     </div>
                 </div>
